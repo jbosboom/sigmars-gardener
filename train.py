@@ -84,6 +84,19 @@ def compute_histograms_for_class(class_name, instance_files):
     mser_hist = sum(mser_histograms)/len(mser_histograms)
     return color_hist, circle_hist, gftt_hist, mser_hist
 
+def classify(class_to_hists, image):
+    if isinstance(image, str):
+        image = cv.imread(image)
+    ihs = compute_histograms_for_image(image)
+    best_score = math.inf
+    best_class = None
+    for name, chs in class_to_hists.items():
+        score = sum(cv.compareHist(ih, ch, cv.HISTCMP_CHISQR) for (ih, ch) in zip(ihs, chs))
+        if score < best_score:
+            best_score = score
+            best_class = name
+    return best_class, best_score
+
 def main(args):
     class_dirs = os.listdir('data/classes/')
     class_dirs.sort()
@@ -100,6 +113,13 @@ def main(args):
             chi = [cv.compareHist(h, j, cv.HISTCMP_CHISQR) for (h, j) in zip(hs, js)]
             chi_str = ' '.join('{:6.2f}'.format(c) for c in chi)
             print('{:20} {:20} {}'.format(c, d, chi_str))
+
+    for c, instances in class_to_instances.items():
+        for i in instances:
+            best_class, best_score = classify(class_to_hists, i)
+            correct_score = sum(cv.compareHist(ih, ch, cv.HISTCMP_CHISQR) for (ih, ch) in zip(compute_histograms_for_image(cv.imread(i)), class_to_hists[c]))
+            if best_class != c:
+                print(i, best_class, best_score, correct_score)
 
 if __name__ == '__main__':
     main(None)
