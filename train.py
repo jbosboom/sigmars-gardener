@@ -20,7 +20,7 @@ def compute_keypoint_histogram(image, detector):
         kp_hist = cv.calcHist([polar_kps], [0, 1], None, [20, 16], [0, 20, -math.pi, math.pi])
         cv.normalize(kp_hist, kp_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
     else:
-        kp_hist = np.zeros((20, 16), dtype=np.float32)
+        kp_hist = np.ones((20, 16), dtype=np.float32) # unprincipled ones
     return kp_hist
 
 def compute_histograms_for_image(image):
@@ -42,7 +42,7 @@ def compute_histograms_for_image(image):
         circle_hist = cv.calcHist([circle_sizes], [0], None, [13], [3, 16])
         cv.normalize(circle_hist, circle_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
     else:
-        circle_hist = np.zeros((13, 1), dtype=np.float32)
+        circle_hist = np.ones((13, 1), dtype=np.float32) # unprincipled ones
 
     gftt_hist = compute_keypoint_histogram(image, cv.GFTTDetector.create(maxCorners=10000))
     mser_hist = compute_keypoint_histogram(image, cv.MSER.create())
