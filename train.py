@@ -8,8 +8,7 @@ def compute_histograms(class_name, instance_files):
     circle_histograms = [] # histogram of circle sizes in the image
     for f in instance_files:
         image = cv.imread(f)
-        hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
-        hist = cv.calcHist([hsv], [0, 1], None, [50, 60], [0, 180, 0, 256])
+        hist = cv.calcHist([image], [0, 1, 2], None, [64, 64, 64], [0, 256, 0, 256, 0, 256])
         cv.normalize(hist, hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
         color_histograms.append(hist)
 
