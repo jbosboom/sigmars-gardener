@@ -23,6 +23,31 @@ def compute_keypoint_histogram(image, detector):
         kp_hist = np.zeros((20, 16), dtype=np.float32)
     return kp_hist
 
+def compute_histograms_for_image(image):
+    color_hist = cv.calcHist([image], [0, 1, 2], None, [64, 64, 64], [0, 256, 0, 256, 0, 256])
+    cv.normalize(color_hist, color_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
+
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    gray_blur = cv.blur(gray, (3, 3))
+    circle_sizes = []
+    # We get different results bounding the radius versus just giving the full range at once.
+    for circle_size in range(3, 15 + 1):
+        circles = cv.HoughCircles(gray_blur, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=20, minRadius=circle_size,
+            maxRadius=circle_size)
+        if circles is not None:
+            for c in circles[0]:
+                circle_sizes.append((c[2],))
+    if circle_sizes:
+        circle_sizes = np.array(circle_sizes, dtype=np.float32)
+        circle_hist = cv.calcHist([circle_sizes], [0], None, [13], [3, 16])
+        cv.normalize(circle_hist, circle_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
+    else:
+        circle_hist = np.zeros((13, 1), dtype=np.float32)
+
+    gftt_hist = compute_keypoint_histogram(image, cv.GFTTDetector.create(maxCorners=10000))
+    mser_hist = compute_keypoint_histogram(image, cv.MSER.create())
+    return color_hist, circle_hist, gftt_hist, mser_hist
+
 def avg_chi(histograms):
     cross_chi = [cv.compareHist(h, j, cv.HISTCMP_CHISQR) for h in histograms for j in histograms if
         id(h) != id(j)]
@@ -32,36 +57,18 @@ def avg_chi(histograms):
         avg_chi = -1.0
     return avg_chi
 
-def compute_histograms(class_name, instance_files):
+def compute_histograms_for_class(class_name, instance_files):
     color_histograms = []
     circle_histograms = [] # histogram of circle sizes in the image
     gftt_histograms = []
     mser_histograms = []
     for f in instance_files:
         image = cv.imread(f)
-        color_hist = cv.calcHist([image], [0, 1, 2], None, [64, 64, 64], [0, 256, 0, 256, 0, 256])
-        cv.normalize(color_hist, color_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
+        color_hist, circle_hist, gftt_hist, mser_hist = compute_histograms_for_image(image)
         color_histograms.append(color_hist)
-
-        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        gray_blur = cv.blur(gray, (3, 3))
-        circle_sizes = []
-        # We get different results bounding the radius versus just giving the full range at once.
-        for circle_size in range(3, 15+1):
-            circles = cv.HoughCircles(gray_blur, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=20, minRadius=circle_size, maxRadius=circle_size)
-            if circles is not None:
-                for c in circles[0]:
-                    circle_sizes.append((c[2],))
-        if circle_sizes:
-            circle_sizes = np.array(circle_sizes, dtype=np.float32)
-            circle_hist = cv.calcHist([circle_sizes], [0], None, [13], [3, 16])
-            cv.normalize(circle_hist, circle_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
-        else:
-            circle_hist = np.zeros((13, 1), dtype=np.float32)
         circle_histograms.append(circle_hist)
-
-        gftt_histograms.append(compute_keypoint_histogram(image, cv.GFTTDetector.create(maxCorners=10000)))
-        mser_histograms.append(compute_keypoint_histogram(image, cv.MSER.create()))
+        gftt_histograms.append(gftt_hist)
+        mser_histograms.append(mser_hist)
 
     color_avg_chi = avg_chi(color_histograms)
     circle_avg_chi = avg_chi(circle_histograms)
@@ -87,7 +94,7 @@ def main(args):
         class_to_instances[cd] = ['data/classes/'+cd+'/'+instance for instance in instances]
     class_to_hists = {}
     for c, instances in class_to_instances.items():
-        class_to_hists[c] = compute_histograms(c, instances)
+        class_to_hists[c] = compute_histograms_for_class(c, instances)
     for c, hs in class_to_hists.items():
         for d, js in class_to_hists.items():
             chi = [cv.compareHist(h, j, cv.HISTCMP_CHISQR) for (h, j) in zip(hs, js)]
