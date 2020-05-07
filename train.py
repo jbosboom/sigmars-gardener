@@ -20,11 +20,11 @@ def compute_keypoint_histogram(image, detector):
         kp_hist = cv.calcHist([polar_kps], [0, 1], None, [20, 16], [0, 20, -math.pi, math.pi])
         cv.normalize(kp_hist, kp_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
     else:
-        kp_hist = np.ones((20, 16), dtype=np.float32) # unprincipled ones
+        kp_hist = np.ones((20, 16), dtype=np.float32) / (20*16) # unprincipled ones
     return kp_hist
 
 def compute_histograms_for_image(image):
-    color_hist = cv.calcHist([image], [0, 1, 2], None, [64, 64, 64], [0, 256, 0, 256, 0, 256])
+    color_hist = cv.calcHist([image], [0, 1, 2], None, [16, 16, 16], [0, 256, 0, 256, 0, 256])
     cv.normalize(color_hist, color_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
 
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
@@ -42,14 +42,14 @@ def compute_histograms_for_image(image):
         circle_hist = cv.calcHist([circle_sizes], [0], None, [13], [3, 16])
         cv.normalize(circle_hist, circle_hist, alpha=0.0, beta=1.0, norm_type=cv.NORM_MINMAX)
     else:
-        circle_hist = np.ones((13, 1), dtype=np.float32) # unprincipled ones
+        circle_hist = np.ones((13, 1), dtype=np.float32) / 13 # unprincipled ones
 
     gftt_hist = compute_keypoint_histogram(image, cv.GFTTDetector.create(maxCorners=10000))
     mser_hist = compute_keypoint_histogram(image, cv.MSER.create())
     return color_hist, circle_hist, gftt_hist, mser_hist
 
 def avg_chi(histograms):
-    cross_chi = [cv.compareHist(h, j, cv.HISTCMP_CHISQR) for h in histograms for j in histograms if
+    cross_chi = [cv.compareHist(h, j, cv.HISTCMP_CHISQR_ALT) for h in histograms for j in histograms if
         id(h) != id(j)]
     if len(cross_chi):
         avg_chi = sum(cross_chi) / len(cross_chi)
@@ -91,7 +91,7 @@ def classify(class_to_hists, image):
     best_score = math.inf
     best_class = None
     for name, chs in class_to_hists.items():
-        score = sum(cv.compareHist(ih, ch, cv.HISTCMP_CHISQR) for (ih, ch) in zip(ihs, chs))
+        score = sum(cv.compareHist(ih, ch, cv.HISTCMP_CHISQR_ALT) for (ih, ch) in zip(ihs, chs))
         if score < best_score:
             best_score = score
             best_class = name
@@ -110,14 +110,14 @@ def main(args):
         class_to_hists[c] = compute_histograms_for_class(c, instances)
     for c, hs in class_to_hists.items():
         for d, js in class_to_hists.items():
-            chi = [cv.compareHist(h, j, cv.HISTCMP_CHISQR) for (h, j) in zip(hs, js)]
+            chi = [cv.compareHist(h, j, cv.HISTCMP_CHISQR_ALT) for (h, j) in zip(hs, js)]
             chi_str = ' '.join('{:6.2f}'.format(c) for c in chi)
             print('{:20} {:20} {}'.format(c, d, chi_str))
 
     for c, instances in class_to_instances.items():
         for i in instances:
             best_class, best_score = classify(class_to_hists, i)
-            correct_score = sum(cv.compareHist(ih, ch, cv.HISTCMP_CHISQR) for (ih, ch) in zip(compute_histograms_for_image(cv.imread(i)), class_to_hists[c]))
+            correct_score = sum(cv.compareHist(ih, ch, cv.HISTCMP_CHISQR_ALT) for (ih, ch) in zip(compute_histograms_for_image(cv.imread(i)), class_to_hists[c]))
             if best_class != c:
                 print(i, best_class, best_score, correct_score)
 
