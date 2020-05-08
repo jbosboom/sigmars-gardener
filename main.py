@@ -4,7 +4,7 @@ from math import sqrt
 import hashlib
 from pathlib import Path
 import pyautogui
-import data, train
+import data, train, solver
 
 def extract_and_clean(screenshot, region_center):
     cx, cy = region_center
@@ -40,12 +40,13 @@ def main(args):
     for i, region_center in enumerate(data.centers):
         image, pixel_data_hash = extract_and_clean(screenshot, region_center)
         thing = classifier(image, pixel_data_hash)
-        print(i, thing)
         if thing.endswith('-inactive'):
             thing = thing[:-9]
         if thing != 'blank':
             puzzle[i] = thing
     print(puzzle)
+    moves = solver.solve(puzzle)
+    print(moves)
 
 
 if __name__ == '__main__':
