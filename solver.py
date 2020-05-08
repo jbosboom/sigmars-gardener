@@ -41,7 +41,7 @@ def _solve_recurse(puzzle, current_metal):
         if current_metal == 'gold' and puzzle[atom1] == 'gold':
             del puzzle[atom1]
             moves = _solve_recurse(puzzle, None)
-            if moves:
+            if moves is not None:
                 moves.append((atom1, atom1))
                 return moves
             puzzle[atom1] = 'gold'
@@ -53,7 +53,7 @@ def _solve_recurse(puzzle, current_metal):
                 del puzzle[atom1]
                 del puzzle[atom2]
                 moves = _solve_recurse(puzzle, next_metal)
-                if moves:
+                if moves is not None:
                     moves.append((atom1, atom2))
                     return moves
                 puzzle[atom1] = t1
