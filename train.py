@@ -44,7 +44,7 @@ class Classifier:
         if pixel_data_hash:
             c = self.instance_to_class.get(pixel_data_hash)
             if c:
-                return c
+                return c, 0.0
 
         ihs = Classifier._compute_histograms_for_image(image)
         best_score = math.inf
