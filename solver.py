@@ -33,7 +33,7 @@ def _solve_recurse(puzzle, current_metal):
             # note that the dummy is always free
             neighbor_free = [n not in puzzle for n in data.neighbors[atom]]
             # allow wraparound
-            neighbor_free.extend(neighbor_free[:-2])
+            neighbor_free.extend(neighbor_free[:2])
             for i in range(len(neighbor_free)):
                 if neighbor_free[i:i+3] == [True, True, True]:
                     free_atoms.append(atom)
