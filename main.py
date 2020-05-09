@@ -4,19 +4,10 @@ from math import sqrt
 import time
 import hashlib
 import pickle
-from operator import itemgetter
 from pathlib import Path
 import pyautogui
 import xdg
 import data, train, solver
-
-# Every puzzle should have this many of each atom type.
-_puzzle_contents = {
-    'air': 8, 'earth': 8, 'fire': 8, 'water': 8, 'salt': 4,
-    'quicksilver': 5, 'lead': 1, 'tin': 1, 'iron': 1, 'copper': 1, 'silver': 1, 'gold': 1,
-    'vitae': 4, 'mors': 4,
-    'blank': 36,
-}
 
 def extract_and_clean(screenshot, region_center):
     cx, cy = region_center
@@ -37,25 +28,14 @@ def extract_and_clean(screenshot, region_center):
     return region, pixel_data_hash
 
 def parse_screenshot(screenshot, classifier):
-    possible_parses = []
+    puzzle = {}
     for i, region_center in enumerate(data.centers):
         image, pixel_data_hash = extract_and_clean(screenshot, region_center)
-        for class_name, score in classifier.full_classify(image, pixel_data_hash):
-            if class_name.endswith('-inactive'):
-                class_name = class_name[:-9]
-                possible_parses.append((score, i, class_name))
-    possible_parses.sort(key=itemgetter(0))
-
-    puzzle = {}
-    histogram = {k: 0 for k in _puzzle_contents.keys()}
-    assigned_cells = set()
-    for score, center, class_name in possible_parses:
-        if center in assigned_cells: continue
-        if histogram[class_name] == _puzzle_contents[class_name]: continue
-        histogram[class_name] += 1
-        assigned_cells.add(center)
-        if class_name != 'blank':
-            puzzle[center] = class_name
+        thing = classifier(image, pixel_data_hash)
+        if thing.endswith('-inactive'):
+            thing = thing[:-9]
+        if thing != 'blank':
+            puzzle[i] = thing
     return puzzle
 
 def main(args):
@@ -84,6 +64,21 @@ def main(args):
     screenshot = pyautogui.screenshot(region=(upper_left_x, upper_left_y, 1920, 1080))
     puzzle = parse_screenshot(screenshot, classifier)
     print(puzzle)
+
+    histogram = {v: 0 for v in puzzle.values()}
+    for v in puzzle.values():
+        histogram[v] += 1
+    histogram['blank'] = data.dummy - len(puzzle)
+    expected = {
+        'air': 8, 'earth': 8, 'fire': 8, 'water': 8, 'salt': 4,
+        'quicksilver': 5, 'lead': 1, 'tin': 1, 'iron': 1, 'copper': 1, 'silver': 1, 'gold': 1,
+        'vitae': 4, 'mors': 4,
+        'blank': 36,
+    }
+    for k, v in histogram.items():
+        if expected[k] != v:
+            print('wrong number of {}: expected {}, found {}'.format(k, expected[k], v))
+
     moves = solver.solve(puzzle)
     print(moves)
 

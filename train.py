@@ -3,7 +3,6 @@ import shutil
 import sys, os
 import math
 from math import atan2, sqrt
-from operator import itemgetter
 from pathlib import Path
 from typing import Dict, List
 import cv2 as cv
@@ -33,9 +32,6 @@ class Classifier:
         return self.classify(image, pixel_data_hash)[0]
 
     def classify(self, image, pixel_data_hash=None):
-        return self.full_classify(image, pixel_data_hash)[0]
-
-    def full_classify(self, image, pixel_data_hash=None):
         if isinstance(image, str):
             image = cv.imread(image)
         if isinstance(image, Path):
@@ -48,15 +44,17 @@ class Classifier:
         if pixel_data_hash:
             c = self.instance_to_class.get(pixel_data_hash)
             if c:
-                return [(c, 0.0)]
+                return c, 0.0
 
         ihs = Classifier._compute_histograms_for_image(image)
-        class_scores = []
+        best_score = math.inf
+        best_class = None
         for name, chs in self.class_to_histograms.items():
             score = sum(cv.compareHist(ih, ch, cv.HISTCMP_CHISQR_ALT) for (ih, ch) in zip(ihs, chs))
-            class_scores.append((name, score))
-        class_scores.sort(key=itemgetter(1))
-        return class_scores
+            if score < best_score:
+                best_score = score
+                best_class = name
+        return best_class, best_score
 
     @staticmethod
     def _compute_keypoint_histogram(image, detector):
