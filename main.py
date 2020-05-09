@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from math import sqrt
+import time
 import hashlib
 import pickle
 from pathlib import Path
@@ -81,9 +82,19 @@ def main(args):
     while moves:
         a, b = moves.pop(0) # could reverse the list, I guess
         cx, cy = data.centers[a]
-        pyautogui.click(upper_left_x + cx, upper_left_y + cy)
+        pyautogui.moveTo(upper_left_x + cx, upper_left_y + cy, duration=0.1)
+        time.sleep(0.1)
+        pyautogui.mouseDown()
+        time.sleep(0.1)
+        pyautogui.mouseUp()
         cx, cy = data.centers[b]
-        pyautogui.click(upper_left_x + cx, upper_left_y + cy)
+        pyautogui.moveTo(upper_left_x + cx, upper_left_y + cy, duration=0.1)
+        time.sleep(0.1)
+        pyautogui.mouseDown()
+        time.sleep(0.1)
+        pyautogui.mouseUp()
+        pyautogui.moveTo(upper_left_x, upper_left_y, duration=0.1)
+        time.sleep(0.1)
 
         # Check if our identification of any puzzle elements changed.  If so,
         # write out the old screenshot and re-solve with the new information.
