@@ -1,0 +1,3 @@
+This is a bot that plays the Sigmar's Garden solitaire minigame in Opus Magnum.
+
+The actual solver is very simple.  The hard part is parsing the image, and it's something I don't really succeed at yet.  The classifier is a nearest-centroid classifier based on four histograms: raw RGB values, Hough circle sizes, GFTT keypoint radial distribution about the center, and MSER keypoint radial distribution about the center.  You can view the latter two as feature descriptors, I guess, but this is pretty unprincipled.  The classifier also remembers all of its training data so it doesn't make the same mistake twice, but it makes enough mistakes that this is not a scalable solution.
