@@ -2,8 +2,10 @@
 
 from math import sqrt
 import hashlib
+import pickle
 from pathlib import Path
 import pyautogui
+import xdg
 import data, train, solver
 
 def extract_and_clean(screenshot, region_center):
@@ -25,6 +27,7 @@ def extract_and_clean(screenshot, region_center):
     return region, pixel_data_hash
 
 def main(args):
+    classifier_hash = hashlib.sha1()
     class_dirs = [x for x in Path('data/classes').iterdir()]
     class_dirs.sort()
     class_to_instances = {}
@@ -32,7 +35,18 @@ def main(args):
         instances = [x for x in cd.iterdir()]
         instances.sort()
         class_to_instances[cd.name] = instances
-    classifier = train.Classifier(class_to_instances)
+        classifier_hash.update(cd.name.encode())
+        for i in instances:
+            classifier_hash.update(str(i).encode())
+    classifier_hash = classifier_hash.hexdigest()
+    classifier_pickle_file = xdg.XDG_CACHE_HOME / ('sigmars-gardener-classifier-' + classifier_hash)
+    try:
+        with open(classifier_pickle_file, 'rb') as f:
+            classifier = pickle.load(f)
+    except FileNotFoundError:
+        classifier = train.Classifier(class_to_instances)
+        with open(classifier_pickle_file, 'wb') as f:
+            pickle.dump(classifier, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     upper_left_x, upper_left_y, _, _ = pyautogui.locateOnScreen('data/upper-left.png')
     screenshot = pyautogui.screenshot(region=(upper_left_x, upper_left_y, 1920, 1080))
