@@ -45,6 +45,18 @@ def main(args):
         if thing != 'blank':
             puzzle[i] = thing
     print(puzzle)
+
+    histogram = {v: 0 for v in puzzle.values()}
+    for v in puzzle.values():
+        histogram[v] += 1
+    expected = {
+        'air': 8, 'earth': 8, 'fire': 8, 'water': 8, 'salt': 4,
+        'quicksilver': 5, 'lead': 1, 'tin': 1, 'iron': 1, 'copper': 1, 'silver': 1, 'gold': 1
+    }
+    for k, v in expected.items():
+        if histogram[k] != v:
+            print('wrong number of {}: expected {}, found {}'.format(k, v, histogram[k]))
+
     moves = solver.solve(puzzle)
     print(moves)
 
