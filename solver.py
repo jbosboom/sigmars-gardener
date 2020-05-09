@@ -5,7 +5,7 @@ _cardinals = ['air', 'earth', 'fire', 'water']
 _metals = ['lead', 'tin', 'iron', 'copper', 'silver', 'gold']
 def solve(puzzle: Dict[int, str]):
     # Gold "matches with itself" for the purposes of the moves list.
-    moves: List[Tuple[int, int]] = _solve_recurse(puzzle, 'lead')
+    moves: List[Tuple[int, int]] = _solve_recurse(puzzle.copy(), 'lead')
     moves.reverse()
     return moves
 
