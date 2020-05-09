@@ -19,6 +19,8 @@ def _atoms_match(a, b):
         return True
     if (a in _metals and b == 'quicksilver') or (b in _metals and a == 'quicksilver'):
         return True
+    if (a == 'vitae' and b == 'mors') or (a == 'mors' and b == 'vitae'):
+        return True
     return False
 
 def _solve_recurse(puzzle, current_metal):
