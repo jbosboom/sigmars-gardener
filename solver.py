@@ -8,7 +8,7 @@ def solve(puzzle: Dict[int, str]):
     # Find the current metal, the least metal present.
     metals = [m for m in puzzle.values() if m in _metals]
     metals.sort(key=lambda m: _metals.index(m))
-    moves: List[Tuple[int, int]] = _solve_recurse(puzzle.copy(), metals[0])
+    moves: List[Tuple[int, int]] = _solve_recurse(puzzle.copy(), metals[0], set())
     moves.reverse()
     return moves
 
@@ -26,9 +26,12 @@ def _atoms_match(a, b):
         return True
     return False
 
-def _solve_recurse(puzzle, current_metal):
+def _solve_recurse(puzzle, current_metal, fail_memo):
     if not puzzle:
         return []
+    fail_set = frozenset(puzzle.items())
+    if fail_set in fail_memo:
+        return None
 
     free_atoms = []
     for atom in puzzle:
@@ -45,7 +48,7 @@ def _solve_recurse(puzzle, current_metal):
     for i, atom1 in enumerate(free_atoms):
         if current_metal == 'gold' and puzzle[atom1] == 'gold':
             del puzzle[atom1]
-            moves = _solve_recurse(puzzle, None)
+            moves = _solve_recurse(puzzle, None, fail_memo)
             if moves is not None:
                 moves.append((atom1, atom1))
                 return moves
@@ -57,11 +60,12 @@ def _solve_recurse(puzzle, current_metal):
                 next_metal = _metals[_metals.index(current_metal)+1] if t1 == current_metal or t2 == current_metal else current_metal
                 del puzzle[atom1]
                 del puzzle[atom2]
-                moves = _solve_recurse(puzzle, next_metal)
+                moves = _solve_recurse(puzzle, next_metal, fail_memo)
                 if moves is not None:
                     moves.append((atom1, atom2))
                     return moves
                 puzzle[atom1] = t1
                 puzzle[atom2] = t2
 
+    fail_memo.add(fail_set)
     return None
