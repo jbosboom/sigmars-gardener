@@ -113,7 +113,6 @@ def main(args):
                 mistake_image.save(mistake_dir / (mistake_hash + '.png'))
                 mistaken = True
         if mistaken:
-            # TODO: resolving here is never going to work once we've removed a metal
             moves = solver.solve(new_puzzle)
             if not moves:
                 raise Exception("mistake made puzzle unsolvable")

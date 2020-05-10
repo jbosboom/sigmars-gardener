@@ -5,7 +5,10 @@ _cardinals = ['air', 'earth', 'fire', 'water']
 _metals = ['lead', 'tin', 'iron', 'copper', 'silver', 'gold']
 def solve(puzzle: Dict[int, str]):
     # Gold "matches with itself" for the purposes of the moves list.
-    moves: List[Tuple[int, int]] = _solve_recurse(puzzle.copy(), 'lead')
+    # Find the current metal, the least metal present.
+    metals = [m for m in puzzle.values() if m in _metals]
+    metals.sort(key=lambda m: _metals.index(m))
+    moves: List[Tuple[int, int]] = _solve_recurse(puzzle.copy(), metals[0])
     moves.reverse()
     return moves
 
