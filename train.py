@@ -39,7 +39,7 @@ class Classifier:
         if isinstance(image, Image.Image):
             # https://stackoverflow.com/a/14140796
             image = np.array(image)
-            cv.cvtColor(image, cv.COLOR_RGB2BGR)
+            image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
 
         if pixel_data_hash:
             c = self.instance_to_class.get(pixel_data_hash)
