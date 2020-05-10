@@ -109,7 +109,7 @@ def main(args):
             if puzzle[k] != v:
                 mistake_dir = xdg.XDG_RUNTIME_DIR / 'sigmars-gardener'
                 mistake_dir.mkdir(exist_ok=True)
-                mistake_image, mistake_hash = extract_and_clean(new_screenshot, data.centers[k])
+                mistake_image, mistake_hash = extract_and_clean(screenshot, data.centers[k])
                 mistake_image.save(mistake_dir / (mistake_hash + '.png'))
                 mistaken = True
         if mistaken:
